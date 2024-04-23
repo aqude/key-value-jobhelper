@@ -12,8 +12,8 @@ import (
 func main() {
 	runtime.LockOSThread()
 
-	myWindow := MainWindow()    // instantiate
-	myWindow.window.RunAsMain() // ...and run
+	myWindow := MainWindow()
+	myWindow.window.RunAsMain()
 }
 
 type MainWindowStruct struct {

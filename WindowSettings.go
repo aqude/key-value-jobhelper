@@ -12,10 +12,18 @@ import (
 
 type WindowSettingsStruct struct {
 	title                string
+	titleElement         ui.Static
 	window               ui.WindowMain
 	buttonImportJsonData ui.Button
 	txtJsonDataPicker    ui.Button
 	jsonData             Interactions
+}
+
+func (s *WindowSettingsStruct) setTitle(title string) {
+	s.title = title
+}
+func (s *WindowSettingsStruct) getTitle() string {
+	return s.title
 }
 
 type Interactions struct {
@@ -27,14 +35,21 @@ type InteractionsTable struct {
 }
 
 func WindowSettings() *WindowSettingsStruct {
+	p := &WindowSettingsStruct{}
+	p.setTitle("Settings")
+
 	wnd := ui.NewWindowMain(
 		ui.WindowMainOpts().
-			Title("Settings").
-			ClientArea(win.SIZE{Cx: 500, Cy: 200}),
+			Title(p.getTitle()).
+			ClientArea(win.SIZE{Cx: 300, Cy: 200}),
 	)
 
 	me := &WindowSettingsStruct{
-		title: "Settings",
+		titleElement: ui.NewStatic(wnd,
+			ui.StaticOpts().
+				Text(p.getTitle()).
+				Position(win.POINT{X: 130, Y: 10}),
+		),
 
 		window: wnd,
 
@@ -46,24 +61,24 @@ func WindowSettings() *WindowSettingsStruct {
 		buttonImportJsonData: ui.NewButton(wnd,
 			ui.ButtonOpts().
 				Text("&Import").
-				Position(win.POINT{X: 240, Y: 19}),
+				Position(win.POINT{X: 190, Y: 19}),
 		),
 	}
 
 	me.txtJsonDataPicker.On().BnClicked(func() {
-		filepath, err := dialog.File().Filter("JSON", ".json").Load()
+		filepath, err := dialog.File().Filter("JSON Files", "json").Load()
 		if err != nil {
-			me.window.Hwnd().MessageBox("error file pick: "+err.Error(), me.title, co.MB_ICONERROR)
+			me.window.Hwnd().MessageBox("error file pick: "+err.Error(), p.getTitle(), co.MB_ICONERROR)
 		}
 		file, err := os.Open(filepath)
 		if err != nil {
-			me.window.Hwnd().MessageBox("error open file: "+err.Error(), me.title, co.MB_ICONERROR)
+			me.window.Hwnd().MessageBox("error open file: "+err.Error(), p.getTitle(), co.MB_ICONERROR)
 		}
 		defer file.Close()
 
 		bytes, err := os.ReadFile(filepath)
 		if err != nil {
-			me.window.Hwnd().MessageBox("error read file: "+err.Error(), me.title, co.MB_ICONERROR)
+			me.window.Hwnd().MessageBox("error read file: "+err.Error(), p.getTitle(), co.MB_ICONERROR)
 		}
 		data := Interactions{}
 		if err := json.Unmarshal(bytes, &data); err != nil {
@@ -71,7 +86,14 @@ func WindowSettings() *WindowSettingsStruct {
 			return
 		}
 		me.jsonData = data
+	})
+
+	me.buttonImportJsonData.On().BnClicked(func() {
 		fmt.Println(me.jsonData)
+		err := me.window.Hwnd().DestroyWindow()
+		if err != nil {
+			me.window.Hwnd().MessageBox("error destroy window: "+err.Error(), p.getTitle(), co.MB_ICONERROR)
+		}
 	})
 	return me
 }
