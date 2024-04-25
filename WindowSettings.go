@@ -26,6 +26,14 @@ func (s *WindowSettingsStruct) getTitle() string {
 	return s.title
 }
 
+func (s *WindowSettingsStruct) setJsonData(jsonData Interactions) {
+	s.jsonData = jsonData
+}
+
+func (s *WindowSettingsStruct) getJsonData() Interactions {
+	return s.jsonData
+}
+
 type Interactions struct {
 	InteractionsTable []InteractionsTable `json:"interactionsTable"`
 }
@@ -41,7 +49,7 @@ func WindowSettings() *WindowSettingsStruct {
 	wnd := ui.NewWindowMain(
 		ui.WindowMainOpts().
 			Title(p.getTitle()).
-			ClientArea(win.SIZE{Cx: 300, Cy: 200}),
+			ClientArea(win.SIZE{Cx: 300, Cy: 100}),
 	)
 
 	me := &WindowSettingsStruct{
@@ -85,15 +93,18 @@ func WindowSettings() *WindowSettingsStruct {
 			fmt.Println("Error parsing JSON:", err)
 			return
 		}
-		me.jsonData = data
+		p.setJsonData(data)
 	})
 
 	me.buttonImportJsonData.On().BnClicked(func() {
-		fmt.Println(me.jsonData)
-		err := me.window.Hwnd().DestroyWindow()
-		if err != nil {
-			me.window.Hwnd().MessageBox("error destroy window: "+err.Error(), p.getTitle(), co.MB_ICONERROR)
+		if p.getJsonData().InteractionsTable == nil {
+			me.window.Hwnd().MessageBox("Json data not set", p.getTitle(), co.MB_ICONERROR)
+		} else {
+			fmt.Println(p.getJsonData())
+			updateMainWindow(p.getJsonData())
+			me.window.Hwnd().SendMessage(co.WM_CLOSE, 0, 0)
 		}
+
 	})
 	return me
 }
